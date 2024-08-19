@@ -1,11 +1,16 @@
 import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
+import openai
 
-# Получаем токен из переменных окружения
+# Получаем токен из переменной окружения
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-# Инициализация бота с использованием токена
+# Устанавливаем ключ API для OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_API_KEY
+
+# Инициализируем бота с использованием токена
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 # Команда /start
@@ -32,12 +37,11 @@ async def chatgpt(update: Update, context) -> None:
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chatgpt))
 
-# Запуск бота с использованием Webhook
+# Запускаем бота с использованием вебхука
 if __name__ == '__main__':
-    # Настройка Webhook
     app.run_webhook(
         listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 8443)),
+        port=int(os.environ.get("PORT", 5000)),
         url_path=TELEGRAM_TOKEN,
-        webhook_url=f"https://your-domain.onrender.com/{TELEGRAM_TOKEN}"
+        webhook_url=f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}/{TELEGRAM_TOKEN}"
     )

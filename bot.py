@@ -10,9 +10,6 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 openai.api_key = OPENAI_API_KEY
 
-# Инициализируем бота с использованием токена
-app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
 # Команда /start
 async def start(update: Update, context) -> None:
     await update.message.reply_text('Привет! Задавай свои вопросы.')
@@ -31,17 +28,14 @@ async def chatgpt(update: Update, context) -> None:
         answer = response['choices'][0]['message']['content'].strip()
         await update.message.reply_text(answer)
     except Exception as e:
-        await update.message.reply_text(f'Ошибка: {str(e)}')
+        await update.message.reply_text(f"Ошибка: {str(e)}")
 
-# Добавляем обработчики команд и сообщений
+# Инициализируем приложение и добавляем команды и обработчики сообщений
+app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chatgpt))
 
-# Запускаем бота с использованием вебхука
+# Запускаем бота
 if __name__ == '__main__':
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 5000)),
-        url_path=TELEGRAM_TOKEN,
-        webhook_url=f"https://{os.environ['RENDER_EXTERNAL_HOSTNAME']}/{TELEGRAM_TOKEN}"
-    )
+    app.run_polling()

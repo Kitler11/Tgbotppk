@@ -3,12 +3,11 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 import openai
 
-# Получаем токен из переменной окружения
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-
-# Устанавливаем ключ API для OpenAI
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-openai.api_key = OPENAI_API_KEY
+
+# Инициализация бота
+app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 # Команда /start
 async def start(update: Update, context) -> None:
@@ -18,24 +17,29 @@ async def start(update: Update, context) -> None:
 async def chatgpt(update: Update, context) -> None:
     user_message = update.message.text
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": user_message},
-            ]
+        openai.api_key = OPENAI_API_KEY
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=user_message,
+            max_tokens=150,
+            n=1,
+            stop=None,
+            temperature=0.7,
         )
-        answer = response['choices'][0]['message']['content'].strip()
+        answer = response.choices[0].text.strip()
         await update.message.reply_text(answer)
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {str(e)}")
 
-# Инициализируем приложение и добавляем команды и обработчики сообщений
-app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
+# Добавление обработчиков команд и сообщений
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chatgpt))
 
-# Запускаем бота
 if __name__ == '__main__':
-    app.run_polling()
+    # Установка вебхука
+    PORT = int(os.environ.get('PORT', 5000))
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=PORT,
+        webhook_url=f"https://{os.getenv('RENDER_EXTERNAL_HOSTNAME')}/{TELEGRAM_TOKEN}",
+    )

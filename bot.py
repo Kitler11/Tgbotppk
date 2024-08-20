@@ -1,20 +1,23 @@
 import os
 from telegram import Update, Chat
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-import openai
 from openai import OpenAI
-from openai import OpenAI
+import requests
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+# OpenAI
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+# Yandex GPT
+CATALOG_ID     = os.getenv("CATALOG_ID")
+SECRET_KEY     = os.getenv("SECRET_KEY")
 
 # Инициализация бота
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-client = OpenAI(
-  # This is the default and can be omitted
-  api_key=OPENAI_API_KEY,
-)
+# client = OpenAI(
+#   # This is the default and can be omitted
+#   api_key=OPENAI_API_KEY,
+# )
 
 
 # Команда /start
@@ -22,23 +25,58 @@ async def start(update: Update, context) -> None:
     await update.message.reply_text('Привет! Задавай свои вопросы.')
 
 # Обработка сообщений для общения с ChatGPT
-async def chatgpt(update: Update, context) -> None:
-    user_message = update.message.text
+# async def chatgpt(update: Update, context) -> None:
+#     user_message = update.message.text
+#     try:
+#         chat_completion = client.chat.completions.create(
+#           messages=[
+#             {
+#               "role": "user",
+#               "content": user_message,
+#             }
+#           ],
+#           model="gpt-3.5-turbo",
+#         )
+#         print(chat_completion)
+#         answer = chat_completion.choices[0].message['content']
+#         await update.message.reply_text(answer)
+#     except Exception as e:
+#         await update.message.reply_text(f"Ошибка: {str(e)}")
+
+
+async def messageFromYandexGPT(requestMessage) -> str:
     try:
-        chat_completion = client.chat.completions.create(
-          messages=[
-            {
-              "role": "user",
-              "content": user_message,
-            }
-          ],
-          model="gpt-3.5-turbo",
-        )
-        print(chat_completion)
-        answer = chat_completion.choices[0].message['content']
-        await update.message.reply_text(answer)
+        prompt = {
+            "modelUri": f"gpt://{CATALOG_ID}/yandexgpt-lite",
+            "completionOptions": {
+                "stream": False,
+                "temperature": 0.6,
+                "maxTokens": "100"
+            },
+            "messages": [
+                {
+                    "role": "system",
+                    "text": "Ты лучший менеджер"
+                },
+                {
+                    "role": "user",
+                    "text": requestMessage
+                }
+            ]
+        }
+
+
+        url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Api-Key {SECRET_KEY}"
+        }
+
+        response = requests.post(url, headers=headers, json=prompt)
+        result = response.text
+        return result
     except Exception as e:
-        await update.message.reply_text(f"Ошибка: {str(e)}")
+        return f'Не удалось получить ответ от Yandex GPT \nошибка: {e}'
 
 async def response(update: Update, context) -> None:
     try:
@@ -48,7 +86,8 @@ async def response(update: Update, context) -> None:
         user = update.message.from_user
         user_message = update.message.text
         
-        await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}')
+        answerAi = await messageFromYandexGPT(user_message)
+        await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}\nanswerAi: {answerAi}')
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {str(e)}")
 

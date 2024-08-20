@@ -3,6 +3,7 @@ from telegram import Update, Chat
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
 from openai import OpenAI
 import requests
+import json
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 # OpenAI
@@ -73,8 +74,9 @@ async def messageFromYandexGPT(requestMessage) -> str:
         }
 
         response = requests.post(url, headers=headers, json=prompt)
-        result = response.text
-        return result
+        result = json.loads(response.text)
+        answer = result['result']['alternatives'][0]['message']['text']
+        return answer
     except Exception as e:
         return f'Не удалось получить ответ от Yandex GPT \nошибка: {e}'
 

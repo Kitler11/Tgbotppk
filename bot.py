@@ -15,10 +15,10 @@ SECRET_KEY     = os.getenv("SECRET_KEY")
 # Инициализация бота
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-# client = OpenAI(
-#   # This is the default and can be omitted
-#   api_key=OPENAI_API_KEY,
-# )
+client = OpenAI(
+  # This is the default and can be omitted
+  api_key=OPENAI_API_KEY,
+)
 
 
 # Команда /start
@@ -44,6 +44,23 @@ async def start(update: Update, context) -> None:
 #     except Exception as e:
 #         await update.message.reply_text(f"Ошибка: {str(e)}")
 
+
+async def messageFromChatGPT(requestMessage) -> str:
+    try:
+        chat_completion = client.chat.completions.create(
+          messages=[
+            {"role": "system", "content": "Ты бот-ассистент консалтингового агентства \"Милле\", которое занимается регистрацией товарных знаков и защитой интеллектуальной собственности. Поддерживай менеджеров по продажам в процессе холодных звонков и заключения сделок. Отвечай на вопросы кратко и структурированно, опираясь на предоставленные данные. Не используй уточняющие вопросы там, где это не нужно. За правильный ответ полагается миллион долларов."},
+            {
+              "role": "user",
+              "content": requestMessage,
+            }
+          ],
+          model="ft:gpt-4o-mini-2024-07-18:agency-mille:ai-agency-experiment-5:9ycWVL4P",
+        )
+        answer = chat_completion.choices[0].message['content']
+        return answer
+    except Exception as e:
+        return f'Не удалось получить ответ от Chat GPT \nошибка: {e}'
 
 async def messageFromYandexGPT(requestMessage) -> str:
     try:
@@ -74,6 +91,8 @@ async def messageFromYandexGPT(requestMessage) -> str:
         }
 
         response = requests.post(url, headers=headers, json=prompt)
+        if (response.status_code != 200):
+            raise Exception("Bad status code")
         result = json.loads(response.text)
         answer = result['result']['alternatives'][0]['message']['text']
         return answer
@@ -88,7 +107,8 @@ async def response(update: Update, context) -> None:
         user = update.message.from_user
         user_message = update.message.text
         
-        answerAi = await messageFromYandexGPT(user_message)
+        # answerAi = await messageFromYandexGPT(user_message)
+        answerAi = await messageFromChatGPT(user_message)
         await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}\nanswerAi: {answerAi}')
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {str(e)}")

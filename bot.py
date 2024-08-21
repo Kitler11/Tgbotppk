@@ -115,7 +115,8 @@ async def response(update: Update, context) -> None:
         # await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}\nanswerAi: {answerAi}')
         await update.message.reply_text(f'{answerAi}')
     except Exception as e:
-        await update.message.reply_text(f"Ошибка: {str(e)}")
+        print(f"Ошибка: {str(e)}")
+        # await update.message.reply_text(f"Ошибка: {str(e)}")
 
 
 def isSelectedTopic(update: Update) -> bool:

@@ -20,7 +20,6 @@ client = OpenAI(
   api_key=OPENAI_API_KEY,
 )
 
-
 # Команда /start
 async def start(update: Update, context) -> None:
     await update.message.reply_text('Привет! Задавай свои вопросы.')

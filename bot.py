@@ -113,7 +113,7 @@ async def response(update: Update, context) -> None:
         # answerAi = await messageFromYandexGPT(user_message)
         answerAi = await messageFromChatGPT(user_message)
         # await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}\nanswerAi: {answerAi}')
-        await update.message.reply_text(f'Вопрос: {user_message}\nМой ответ: {answerAi}')
+        await update.message.reply_text(f'{answerAi}')
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {str(e)}")
 

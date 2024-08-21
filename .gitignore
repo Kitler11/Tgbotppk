@@ -3,3 +3,4 @@ requests
 yandexGPT/
 teaching_materials/
 .ENV
+testtopic.py

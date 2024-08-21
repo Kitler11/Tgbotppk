@@ -48,7 +48,7 @@ async def messageFromChatGPT(requestMessage) -> str:
     try:
         chat_completion = client.chat.completions.create(
           messages=[
-            {"role": "system", "content": "Ты бот-ассистент консалтингового агентства \"Милле\", которое занимается регистрацией товарных знаков и защитой интеллектуальной собственности. Поддерживай менеджеров по продажам в процессе холодных звонков и заключения сделок. Отвечай на вопросы кратко и структурированно, опираясь на предоставленные данные. Не используй уточняющие вопросы там, где это не нужно. За правильный ответ полагается миллион долларов."},
+            {"role": "system", "content": "Ты бот-ассистент консалтингового агентства \"Милле\", которое занимается регистрацией товарных знаков и защитой интеллектуальной собственности. Поддерживай менеджеров по продажам в процессе холодных звонков и заключения сделок. Отвечай на вопросы кратко, без лишней воды, но добавляй информацию, на что ты опираешься при обработке вопроса, опираясь на предоставленные данные. Не используй уточняющие вопросы там, где это не нужно. За правильный ответ полагается миллион долларов."},
             {
               "role": "user",
               "content": requestMessage,
@@ -100,17 +100,30 @@ async def messageFromYandexGPT(requestMessage) -> str:
 
 async def response(update: Update, context) -> None:
     try:
+        print(update)
+        if not isSelectedTopic(update):
+            return
         chat = update.message.chat
         isGroup = chat.type == Chat.SUPERGROUP
         additional = chat.title if isGroup else chat.username
         user = update.message.from_user
         user_message = update.message.text
         
+
         # answerAi = await messageFromYandexGPT(user_message)
         answerAi = await messageFromChatGPT(user_message)
-        await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}\nanswerAi: {answerAi}')
+        # await update.message.reply_text(f'From: {additional} \nuser: {user.first_name} {user.last_name}, id={user.id} \nmessage: {user_message}\nanswerAi: {answerAi}')
+        await update.message.reply_text(f'Вопрос: {user_message}\nМой ответ: {answerAi}')
     except Exception as e:
         await update.message.reply_text(f"Ошибка: {str(e)}")
+
+
+def isSelectedTopic(update: Update) -> bool:
+    chatTitle = 'Mille GPT'
+    topicName = 'Поговорить с роботом'  # Задайте нужный топик
+    if update.message.chat.title == chatTitle and update.message.is_topic_message and update.message.reply_to_message.forum_topic_created.name == topicName:
+        return True
+    return False
 
 # Добавление обработчиков команд и сообщений
 app.add_handler(CommandHandler('start', start))

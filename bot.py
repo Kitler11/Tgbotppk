@@ -56,6 +56,11 @@ async def messageFromChatGPT(requestMessage) -> str:
           ],
           model="ft:gpt-4o-mini-2024-07-18:agency-mille:ai-agency-experiment-5:9ycWVL4P",
         )
+        print('chat_completion', chat_completion)
+        print('chat_completion.choices', chat_completion.choices)
+        print('chat_completion.choices[0]', chat_completion.choices[0])
+        print('chat_completion.choices[0].message', chat_completion.choices[0].message)
+        print('chat_completion.choices[0].message[content]', chat_completion.choices[0].message['content'])
         answer = chat_completion.choices[0].message['content']
         return answer
     except Exception as e:

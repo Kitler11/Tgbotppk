@@ -103,10 +103,10 @@ async def response(update: Update, context) -> None:
         print(update)
         if not isSelectedTopic(update):
             return
-        chat = update.message.chat
-        isGroup = chat.type == Chat.SUPERGROUP
-        additional = chat.title if isGroup else chat.username
-        user = update.message.from_user
+        # chat = update.message.chat
+        # isGroup = chat.type == Chat.SUPERGROUP
+        # additional = chat.title if isGroup else chat.username
+        # user = update.message.from_user
         user_message = update.message.text
         
 
